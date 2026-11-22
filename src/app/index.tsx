@@ -7,10 +7,9 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { router } from 'expo-router';
 
 /**
- * 首頁路由畫面
- * 遵循專案規範：只負責組合畫面，控制在 100 行內
+ * 歡迎頁面
  */
-const Home = () => {
+const WelcomeScreen = () => {
   const handleStart = () => {
     router.push('/login');
   };
@@ -45,7 +44,7 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default WelcomeScreen;
 
 const styles = StyleSheet.create({
   container: {

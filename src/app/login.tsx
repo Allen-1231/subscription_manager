@@ -4,12 +4,14 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { mockUsers } from '../data/mockUsers';
+import TopLoadingBar from '../components/TopLoadingBar';
 
 export default function LoginScreen() {
   // mode 決定現在是「登入」還是「註冊」
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const isRegister = mode === 'register';
 
@@ -17,16 +19,14 @@ export default function LoginScreen() {
     // 檢查欄位不能空白
     if (!email.trim() || !password) {
       Alert.alert('請填寫完整', '電子郵件與密碼都要輸入');
-      setEmail('');
-      setPassword('');
       return;
     }
     // 註冊：先假裝成功，名稱取 email「@」前面的部分
     if (isRegister) {
-      router.replace({
-        pathname: '/home',
-        params: { name: email.split('@')[0] },
-      });
+      setIsLoading(true);  // 載入條
+      setTimeout(() => {
+        router.replace({ pathname: '/home', params: { name: email.split('@')[0] } });
+      }, 1000);
       return;
     }
     // 登入：在假帳號中尋找 email 與密碼都相符的人
@@ -40,11 +40,16 @@ export default function LoginScreen() {
     }
 
     // 成功：換到首頁，並把這個帳號的名稱帶過去
-    router.replace({ pathname: '/home', params: { name: user.name } });
+    // 目前先設定延遲 1 秒後換過去，還沒接後端載入前會更有感覺一點
+    setIsLoading(true);  // 載入條
+    setTimeout(() => {
+      router.replace({ pathname: '/home', params: { name: user.name } });
+      }, 1000);
   };
 
   return (
     <View style={styles.container}>
+      <TopLoadingBar visible={isLoading} />
       <Text style={styles.title}>{isRegister ? '建立帳號' : '歡迎回來'}</Text>
 
       <TextInput
@@ -65,7 +70,7 @@ export default function LoginScreen() {
         onChangeText={setPassword}
       />
 
-      <Pressable style={styles.button} onPress={handleSubmit}>
+      <Pressable style={styles.button} onPress={handleSubmit} disabled={isLoading}>
         <Text style={styles.buttonText}>{isRegister ? '註冊' : '登入'}</Text>
       </Pressable>
 
@@ -82,6 +87,7 @@ export default function LoginScreen() {
     </View>
   );
 }
+// 上面的 disabled={isLoading} 讓按鈕按下後鎖住按鈕，避免跑完後因為按多次按鈕而重複執行 router.replace，到時候後端也需要這個
 
 const styles = StyleSheet.create({
   container: {
