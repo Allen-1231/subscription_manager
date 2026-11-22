@@ -1,98 +1,93 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from "react";
+import { Text, View, StyleSheet, StatusBar } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { AnimatedLogo } from "../components/AnimatedLogo";
+import { HeroPreviewCard } from "../components/HeroPreviewCard";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { router } from 'expo-router';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+/**
+ * 首頁路由畫面
+ * 遵循專案規範：只負責組合畫面，控制在 100 行內
+ */
+const Home = () => {
+  const handleStart = () => {
+    router.push('/login');
+  };
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <>
+      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        colors={["#0f0c29", "#302b63", "#24243e"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
+        {/* 上方：品牌與標題區塊 */}
+        <View style={styles.headerSection}>
+          <AnimatedLogo />
+          <Text style={styles.title}>Subscription</Text>
+          <Text style={styles.titleAccent}>Manager</Text>
+          <Text style={styles.subtitle}>輕鬆管理您的所有訂閱服務</Text>
+        </View>
+
+        {/* 中間：預覽疊層卡片 */}
+        <HeroPreviewCard />
+
+        {/* 下方：主要操作區塊 */}
+        <View style={styles.footerSection}>
+          <PrimaryButton title="立即開始" onPress={handleStart} />
+          <Text style={styles.footerNote}>免費使用・無需信用卡</Text>
+        </View>
+      </LinearGradient>
+    </>
   );
-}
+};
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome &nbsp;Expoji3ok
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
+export default Home;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 50,
+    paddingBottom: 44,
+    paddingHorizontal: 24,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  headerSection: {
+    alignItems: "center",
+    marginTop: 8,
   },
   title: {
-    textAlign: 'center',
+    fontSize: 36,
+    fontWeight: "300",
+    color: "#e0e0ff",
+    letterSpacing: 2,
   },
-  code: {
-    textTransform: 'uppercase',
+  titleAccent: {
+    fontSize: 36,
+    fontWeight: "800",
+    color: "#a78bfa",
+    letterSpacing: 2,
+    marginTop: -4,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  subtitle: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.45)",
+    marginTop: 12,
+    letterSpacing: 0.5,
+  },
+  footerSection: {
+    width: "100%",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: -4,
+  },
+  footerNote: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.3)",
+    letterSpacing: 0.3,
   },
 });
