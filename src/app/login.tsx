@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import {
-  View, Text, TextInput, Pressable, StyleSheet, Alert,
-} from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { mockUsers } from '../data/mockUsers';
 import TopLoadingBar from '../components/TopLoadingBar';
@@ -44,7 +42,7 @@ export default function LoginScreen() {
     setIsLoading(true);  // 載入條
     setTimeout(() => {
       router.replace({ pathname: '/home', params: { name: user.name } });
-      }, 1000);
+    }, 1000);
   };
 
   return (
