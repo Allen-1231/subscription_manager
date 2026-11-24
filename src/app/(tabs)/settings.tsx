@@ -50,6 +50,10 @@ export default function SettingsTab() {
         text: "登出",
         style: "destructive",
         onPress: () => {
+          // 清除導航歷史並返回最外層的歡迎首頁
+          if (router.canDismiss()) {
+            router.dismissAll();
+          }
           router.replace("/");
         },
       },

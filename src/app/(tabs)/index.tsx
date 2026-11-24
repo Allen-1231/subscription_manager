@@ -9,18 +9,19 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
-import { mockSubscriptions } from "../../data/mockSubscriptions";
+import { useSubscriptions } from "../../context/SubscriptionContext";
 
 export default function HomeTab() {
   const insets = useSafeAreaInsets();
   const { name } = useLocalSearchParams<{ name: string }>();
+  const { subscriptions } = useSubscriptions();
 
-  const monthlyTotal = mockSubscriptions.reduce((sum, s) => {
+  const monthlyTotal = subscriptions.reduce((sum, s) => {
     return sum + (s.cycle === "month" ? s.price : Math.round(s.price / 12));
   }, 0);
 
   const yearlyTotal = monthlyTotal * 12;
-  const totalSubscriptions = mockSubscriptions.length;
+  const totalSubscriptions = subscriptions.length;
 
   return (
     <>
@@ -75,26 +76,32 @@ export default function HomeTab() {
           {/* 最近訂閱 */}
           <View style={styles.recentSection}>
             <Text style={styles.sectionTitle}>您的訂閱</Text>
-            {mockSubscriptions.map((sub) => (
-              <View key={sub.id} style={styles.subItem}>
-                <View style={styles.subLeft}>
-                  <View style={styles.subIcon}>
-                    <Text style={styles.subIconText}>
-                      {sub.name.charAt(0)}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text style={styles.subName}>{sub.name}</Text>
-                    <Text style={styles.subCycle}>
-                      {sub.cycle === "month" ? "每月" : "每年"}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.subPrice}>
-                  ${sub.price.toLocaleString()}
-                </Text>
+            {subscriptions.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>目前沒有訂閱項目</Text>
               </View>
-            ))}
+            ) : (
+              subscriptions.map((sub) => (
+                <View key={sub.id} style={styles.subItem}>
+                  <View style={styles.subLeft}>
+                    <View style={styles.subIcon}>
+                      <Text style={styles.subIconText}>
+                        {sub.name.charAt(0)}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={styles.subName}>{sub.name}</Text>
+                      <Text style={styles.subCycle}>
+                        {sub.cycle === "month" ? "每月" : "每年"}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.subPrice}>
+                    ${sub.price.toLocaleString()}
+                  </Text>
+                </View>
+              ))
+            )}
           </View>
         </ScrollView>
       </LinearGradient>
@@ -228,5 +235,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: "#c4b5fd",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    paddingVertical: 24,
+  },
+  emptyText: {
+    color: "rgba(255,255,255,0.35)",
+    fontSize: 14,
   },
 });

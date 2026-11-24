@@ -14,12 +14,12 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Subscription } from "../../types/subscription";
-import { mockSubscriptions } from "../../data/mockSubscriptions";
+import { useSubscriptions } from "../../context/SubscriptionContext";
 
 export default function SubscriptionsTab() {
   const insets = useSafeAreaInsets();
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([...mockSubscriptions]);
+  const { subscriptions, addSubscription, deleteSubscription } = useSubscriptions();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [newName, setNewName] = useState("");
   const [newPrice, setNewPrice] = useState("");
@@ -35,26 +35,20 @@ export default function SubscriptionsTab() {
       Alert.alert("費用格式錯誤", "請輸入有效的金額");
       return;
     }
-    const newSub: Subscription = {
-      id: Date.now().toString(),
-      name: newName.trim(),
-      price,
-      cycle: newCycle,
-    };
-    setSubscriptions((prev) => [...prev, newSub]);
+    addSubscription(newName, price, newCycle);
     setNewName("");
     setNewPrice("");
     setNewCycle("month");
     setModalVisible(false);
   };
 
-  const handleDelete = (id: string) => {
-    Alert.alert("刪除訂閱", "確定要刪除這項訂閱嗎？", [
+  const confirmDelete = (id: string, name: string) => {
+    Alert.alert("刪除訂閱", `確定要刪除「${name}」這項訂閱嗎？`, [
       { text: "取消", style: "cancel" },
       {
         text: "刪除",
         style: "destructive",
-        onPress: () => setSubscriptions((prev) => prev.filter((s) => s.id !== id)),
+        onPress: () => deleteSubscription(id),
       },
     ]);
   };
@@ -102,10 +96,8 @@ export default function SubscriptionsTab() {
             </View>
           }
           renderItem={({ item }) => (
-            <Pressable
-              style={styles.subItem}
-              onLongPress={() => handleDelete(item.id)}
-            >
+            <View style={styles.subItem}>
+              {/* 左側資訊 */}
               <View style={styles.subLeft}>
                 <View style={styles.subIcon}>
                   <Text style={styles.subIconText}>{item.name.charAt(0)}</Text>
@@ -117,8 +109,22 @@ export default function SubscriptionsTab() {
                   </Text>
                 </View>
               </View>
-              <Text style={styles.subPrice}>${item.price.toLocaleString()}</Text>
-            </Pressable>
+
+              {/* 右側：金額 + 垃圾桶按鈕 */}
+              <View style={styles.subRight}>
+                <Text style={styles.subPrice}>${item.price.toLocaleString()}</Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.deleteButton,
+                    pressed && { opacity: 0.6 },
+                  ]}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  onPress={() => confirmDelete(item.id, item.name)}
+                >
+                  <Text style={styles.deleteIcon}>🗑️</Text>
+                </Pressable>
+              </View>
+            </View>
           )}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         />
@@ -268,6 +274,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    flex: 1,
   },
   subIcon: {
     width: 42,
@@ -292,10 +299,28 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.35)",
     marginTop: 2,
   },
+  subRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
   subPrice: {
     fontSize: 16,
     fontWeight: "700",
     color: "#c4b5fd",
+  },
+  deleteButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "rgba(248, 113, 113, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(248, 113, 113, 0.2)",
+  },
+  deleteIcon: {
+    fontSize: 16,
   },
   emptyContainer: {
     alignItems: "center",

@@ -9,24 +9,31 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { mockSubscriptions } from "../../data/mockSubscriptions";
-import { Subscription } from "../../types/subscription";
+import { useSubscriptions } from "../../context/SubscriptionContext";
 
 type FrequencyLevel = "high" | "medium" | "low";
 
 export default function AnalysisTab() {
   const insets = useSafeAreaInsets();
+  const { subscriptions } = useSubscriptions();
 
   // 多選已勾選的訂閱
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // 模擬使用頻率（實際應用中會從使用者行為數據獲取）
-  const frequencyMap: Record<string, FrequencyLevel> = {
-    "1": "high",    // Netflix
-    "2": "medium",  // Spotify
-    "3": "high",    // YouTube Premium
-    "4": "low",     // iCloud
-    "5": "low",     // Adobe
+  // 根據項目預設或名稱字數簡單決定頻率（如已有固定對應則採用）
+  const getFrequency = (id: string, name: string): FrequencyLevel => {
+    const fixedMap: Record<string, FrequencyLevel> = {
+      "1": "high",    // Netflix
+      "2": "medium",  // Spotify
+      "3": "high",    // YouTube Premium
+      "4": "low",     // iCloud
+      "5": "low",     // Adobe
+    };
+    if (fixedMap[id]) return fixedMap[id];
+    // 新增項目的預設頻率判斷
+    if (name.toLowerCase().includes("premium") || name.toLowerCase().includes("pro")) return "high";
+    if (name.length % 2 === 0) return "medium";
+    return "low";
   };
 
   const toggleSelect = (id: string) => {
@@ -42,16 +49,16 @@ export default function AnalysisTab() {
   };
 
   const selectAll = () => {
-    if (selectedIds.size === mockSubscriptions.length) {
+    if (selectedIds.size === subscriptions.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(mockSubscriptions.map((s) => s.id)));
+      setSelectedIds(new Set(subscriptions.map((s) => s.id)));
     }
   };
 
   // 計算選中的訂閱分析
   const analysis = useMemo(() => {
-    const selected = mockSubscriptions.filter((s) => selectedIds.has(s.id));
+    const selected = subscriptions.filter((s) => selectedIds.has(s.id));
 
     const totalMonthly = selected.reduce((sum, s) => {
       return sum + (s.cycle === "month" ? s.price : Math.round(s.price / 12));
@@ -59,12 +66,10 @@ export default function AnalysisTab() {
 
     const totalYearly = totalMonthly * 12;
 
-    // 使用頻繁度分組
-    const highUsage = selected.filter((s) => frequencyMap[s.id] === "high");
-    const mediumUsage = selected.filter((s) => frequencyMap[s.id] === "medium");
-    const lowUsage = selected.filter((s) => frequencyMap[s.id] === "low");
+    const highUsage = selected.filter((s) => getFrequency(s.id, s.name) === "high");
+    const mediumUsage = selected.filter((s) => getFrequency(s.id, s.name) === "medium");
+    const lowUsage = selected.filter((s) => getFrequency(s.id, s.name) === "low");
 
-    // 省錢估算：低頻率使用的項目取消後可以省下的錢
     const potentialSavings = lowUsage.reduce((sum, s) => {
       return sum + (s.cycle === "month" ? s.price : Math.round(s.price / 12));
     }, 0);
@@ -78,7 +83,7 @@ export default function AnalysisTab() {
       lowUsage,
       potentialSavings,
     };
-  }, [selectedIds]);
+  }, [subscriptions, selectedIds]);
 
   const getFrequencyColor = (level: FrequencyLevel) => {
     switch (level) {
@@ -121,59 +126,69 @@ export default function AnalysisTab() {
               <Text style={styles.title}>狀態分析</Text>
               <Text style={styles.subtitle}>勾選要分析的訂閱項目</Text>
             </View>
-            <Pressable
-              style={({ pressed }) => [styles.selectAllBtn, pressed && { opacity: 0.7 }]}
-              onPress={selectAll}
-            >
-              <Text style={styles.selectAllText}>
-                {selectedIds.size === mockSubscriptions.length ? "取消全選" : "全選"}
-              </Text>
-            </Pressable>
+            {subscriptions.length > 0 && (
+              <Pressable
+                style={({ pressed }) => [styles.selectAllBtn, pressed && { opacity: 0.7 }]}
+                onPress={selectAll}
+              >
+                <Text style={styles.selectAllText}>
+                  {selectedIds.size === subscriptions.length ? "取消全選" : "全選"}
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           {/* 訂閱選擇清單 */}
-          <View style={styles.checklistSection}>
-            {mockSubscriptions.map((sub) => {
-              const isSelected = selectedIds.has(sub.id);
-              const freq = frequencyMap[sub.id] || "low";
-              return (
-                <Pressable
-                  key={sub.id}
-                  style={[styles.checkItem, isSelected && styles.checkItemSelected]}
-                  onPress={() => toggleSelect(sub.id)}
-                >
-                  <View style={styles.checkLeft}>
+          {subscriptions.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📭</Text>
+              <Text style={styles.emptyText}>目前沒有任何訂閱項目</Text>
+              <Text style={styles.emptySubText}>請先至「訂閱內容」頁面新增項目</Text>
+            </View>
+          ) : (
+            <View style={styles.checklistSection}>
+              {subscriptions.map((sub) => {
+                const isSelected = selectedIds.has(sub.id);
+                const freq = getFrequency(sub.id, sub.name);
+                return (
+                  <Pressable
+                    key={sub.id}
+                    style={[styles.checkItem, isSelected && styles.checkItemSelected]}
+                    onPress={() => toggleSelect(sub.id)}
+                  >
+                    <View style={styles.checkLeft}>
+                      <View
+                        style={[
+                          styles.checkbox,
+                          isSelected && styles.checkboxChecked,
+                        ]}
+                      >
+                        {isSelected && <Text style={styles.checkMark}>✓</Text>}
+                      </View>
+                      <View>
+                        <Text style={styles.checkName}>{sub.name}</Text>
+                        <Text style={styles.checkPrice}>
+                          ${sub.price.toLocaleString()} / {sub.cycle === "month" ? "月" : "年"}
+                        </Text>
+                      </View>
+                    </View>
                     <View
                       style={[
-                        styles.checkbox,
-                        isSelected && styles.checkboxChecked,
+                        styles.freqBadge,
+                        { backgroundColor: `${getFrequencyColor(freq)}20` },
                       ]}
                     >
-                      {isSelected && <Text style={styles.checkMark}>✓</Text>}
-                    </View>
-                    <View>
-                      <Text style={styles.checkName}>{sub.name}</Text>
-                      <Text style={styles.checkPrice}>
-                        ${sub.price.toLocaleString()} / {sub.cycle === "month" ? "月" : "年"}
+                      <Text
+                        style={[styles.freqText, { color: getFrequencyColor(freq) }]}
+                      >
+                        {getFrequencyLabel(freq)}
                       </Text>
                     </View>
-                  </View>
-                  <View
-                    style={[
-                      styles.freqBadge,
-                      { backgroundColor: `${getFrequencyColor(freq)}20` },
-                    ]}
-                  >
-                    <Text
-                      style={[styles.freqText, { color: getFrequencyColor(freq) }]}
-                    >
-                      {getFrequencyLabel(freq)}
-                    </Text>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
           {/* 分析結果 */}
           {selectedIds.size > 0 && (
@@ -296,10 +311,10 @@ export default function AnalysisTab() {
             </View>
           )}
 
-          {selectedIds.size === 0 && (
+          {subscriptions.length > 0 && selectedIds.size === 0 && (
             <View style={styles.emptyAnalysis}>
               <Text style={styles.emptyIcon}>📋</Text>
-              <Text style={styles.emptyText}>請勾選訂閱項目以開始分析</Text>
+              <Text style={styles.emptyText}>請勾選上方訂閱項目以開始分析</Text>
             </View>
           )}
         </ScrollView>
@@ -542,16 +557,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "rgba(255,255,255,0.4)",
   },
-  emptyAnalysis: {
+  emptyContainer: {
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 50,
   },
   emptyIcon: {
     fontSize: 48,
     marginBottom: 12,
   },
   emptyText: {
-    fontSize: 15,
-    color: "rgba(255,255,255,0.4)",
+    fontSize: 16,
+    color: "#e0e0ff",
+    fontWeight: "600",
+  },
+  emptySubText: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.35)",
+    marginTop: 4,
+  },
+  emptyAnalysis: {
+    alignItems: "center",
+    marginTop: 40,
   },
 });

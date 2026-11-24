@@ -30,7 +30,7 @@ export default function LoginScreen() {
     if (isRegister) {
       setIsLoading(true);
       setTimeout(() => {
-        router.replace({ pathname: '/home', params: { name: email.split('@')[0] } });
+        router.replace({ pathname: '/(tabs)', params: { name: email.split('@')[0] } });
       }, 1000);
       return;
     }
@@ -47,7 +47,7 @@ export default function LoginScreen() {
     // 成功：換到首頁，並把這個帳號的名稱帶過去
     setIsLoading(true);
     setTimeout(() => {
-      router.replace({ pathname: '/home', params: { name: user.name } });
+      router.replace({ pathname: '/(tabs)', params: { name: user.name } });
     }, 1000);
   };
 
