@@ -1,56 +1,135 @@
-# Welcome to your Expo app 👋
+# SubKeeper — 訂閱管家 App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**SubKeeper** 是一款協助使用者管理所有訂閱服務的 Mobile App，可追蹤訂閱費用、分析使用頻率、並提供省錢建議。
 
-## Get started
+---
 
-1. Install dependencies
+## 技術架構
 
-   ```bash
-   npm install
-   ```
+| 項目 | 技術 |
+| :--- | :--- |
+| 框架 | React Native + Expo SDK 58 |
+| 語言 | TypeScript |
+| 導航 | Expo Router（File-based Routing） |
+| 狀態管理 | React Context API |
+| 樣式 | React Native StyleSheet（原生，無外部 UI 庫） |
+| 主題 | 自訂暗黑紫藍漸層（Glassmorphism 風格） |
+| 後端 | 尚未完成，目前使用假資料（`src/data/`） |
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 專案結構
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+subscription_manager/
+├── src/                   ← 所有前端原始碼
+│   ├── app/               ← Expo Router 路由頁面
+│   │   ├── _layout.tsx    ← 根導航器（Stack）
+│   │   ├── index.tsx      ← 歡迎首頁
+│   │   ├── login.tsx      ← 登入 / 註冊
+│   │   └── (tabs)/        ← 登入後的 4 分頁主畫面
+│   ├── components/        ← 可重用 UI 元件
+│   ├── context/           ← React Context 全域狀態
+│   ├── data/              ← 假資料（後端完成後移除）
+│   ├── types/             ← TypeScript 型別定義
+│   ├── utils/             ← 純函式工具（金額計算）
+│   └── theme.ts           ← 全域色彩常數
+├── assets/                ← 圖片、icon、splash 等靜態資源
+├── app.json               ← Expo App 設定（icon、scheme、plugins）
+├── package.json           ← 套件依賴清單
+├── tsconfig.json          ← TypeScript 編譯設定
+└── AGENTS.md              ← AI 協作規則文件
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+---
 
-### Other setup steps
+## 主要功能
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+| 功能 | 狀態 |
+| :--- | :--- |
+| 歡迎頁（品牌 Logo + 預覽卡片） | ✅ 完成 |
+| 登入 / 註冊流程 | ✅ 完成（假資料驗證） |
+| 訂閱清單總覽（首頁） | ✅ 完成 |
+| 訂閱新增 / 刪除（跨頁即時同步） | ✅ 完成 |
+| 狀態分析（勾選 + 多維度分析） | ✅ 完成（使用頻率為假資料） |
+| 省錢估算建議 | ✅ 完成（基於使用頻率） |
+| 設定 / 登出 | ✅ 完成 |
+| 後端 API 串接 | 🔲 待組員完成 |
+| AI 訂閱建議 | 🔲 待組員完成 |
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## 開發指令
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start          # 啟動開發伺服器
+npx expo start --android  # 直接在 Android 開啟
+npx tsc --noEmit        # 型別檢查
+npx expo lint           # Lint 檢查
+npx expo-doctor         # 診斷依賴問題
+```
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## 測試帳號
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+> 後端完成前，使用以下假帳號登入：
+
+| Email | 密碼 |
+| :--- | :--- |
+| amy@test.com | 123456 |
+| ben@test.com | 123456 |
+
+---
+
+## 完整路由 × 資料流關係圖
+
+```
+App 啟動
+  │
+  ▼
+_layout.tsx（Stack 根導航 + SubscriptionProvider）
+  │
+  ▼
+/ ─── index.tsx（歡迎頁）
+        │
+        ├── [登入] ──► /login?mode=login
+        └── [註冊] ──► /login?mode=register
+                            │
+                        [成功驗證]
+                            │
+                            ▼
+                      /(tabs)（底部 4 分頁）
+                        ├── /           首頁：訂閱摘要
+                        ├── /subscriptions  訂閱管理
+                        ├── /analysis   狀態分析
+                        └── /settings
+                                └── [登出] ──► / (歡迎頁)
+```
+
+```
+資料流：
+  mockSubscriptions.ts
+       │（初始值）
+       ▼
+  SubscriptionContext
+       │
+       ├──► (tabs)/index.tsx        （讀取）
+       ├──► (tabs)/subscriptions.tsx（讀 + 寫）
+       └──► (tabs)/analysis.tsx     （讀取）
+```
+
+---
+
+## 各資料夾的 README
+
+| 資料夾 | 說明文件 |
+| :--- | :--- |
+| `src/` | [src/README.md](src/README.md) |
+| `src/app/` | [src/app/README.md](src/app/README.md) |
+| `src/app/(tabs)/` | [src/app/(tabs)/README.md](<src/app/(tabs)/README.md>) |
+| `src/components/` | [src/components/README.md](src/components/README.md) |
+| `src/context/` | [src/context/README.md](src/context/README.md) |
+| `src/data/` | [src/data/README.md](src/data/README.md) |
+| `src/types/` | [src/types/README.md](src/types/README.md) |
+| `src/utils/` | [src/utils/README.md](src/utils/README.md) |
